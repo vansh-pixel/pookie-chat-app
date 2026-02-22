@@ -8,7 +8,7 @@ interface NotificationProps {
     message: any;
     senderName: string;
     onClose: () => void;
-    theme: 'kitty' | 'teddy';
+    theme: 'kitty' | 'teddy' | 'spiderman' | 'spiderwoman';
 }
 
 const Notification = ({ message, senderName, onClose, theme }: NotificationProps) => {
