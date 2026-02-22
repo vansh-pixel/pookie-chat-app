@@ -19,7 +19,7 @@ interface Overlay {
 interface Story {
     _id: string;
     mediaUrl: string;
-    music?: { url: string; title: string; artist: string };
+    music?: { url: string; title: string; artist: string; startTime?: number };
     overlays: Overlay[];
     createdAt: string;
 }
