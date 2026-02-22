@@ -1,0 +1,27 @@
+@import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@300;400;500;600;700&family=Pacifico&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-gray-100 min-h-screen text-gray-800 font-cute;
+    background-color: #f0f2f5;
+    /* WhatsApp desktop gray */
+  }
+}
+
+/* Custom Scrollbar for Cuteness */
+::-webkit-scrollbar {
+  width: 12px;
+}
+
+::-webkit-scrollbar-track {
+  background: #FFF0F5;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: #FF69B4;
+  border-radius: 20px;
+  border: 3px solid #FFF0F5;
+}
