@@ -1,6 +1,6 @@
 "use client";
 import React, { useState } from 'react';
-import { motion } from 'framer-motion';
+import { motion, Transition } from 'framer-motion';
 
 interface SpiderProps {
     type: 'spiderman' | 'spiderwoman';
@@ -38,18 +38,18 @@ const HangingSpider: React.FC<SpiderProps> = ({ type }) => {
     };
 
     // Animation variants
-    const swingTransition = {
+    const swingTransition: { rotate: Transition; y: Transition } = {
         rotate: {
             duration: 3,
             ease: "easeInOut",
             repeat: Infinity,
-            repeatType: "mirror" as const
+            repeatType: "mirror"
         },
         y: {
             duration: 1.5,
             ease: "easeInOut",
             repeat: Infinity,
-            repeatType: "mirror" as const
+            repeatType: "mirror"
         }
     };
 
