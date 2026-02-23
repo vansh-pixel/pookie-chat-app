@@ -12,6 +12,7 @@ import VoiceRecorder from '../../components/VoiceRecorder';
 import Notification from '../../components/Notification';
 import StoryViewer from '../../components/StoryViewer';
 import StoryEditor from '../../components/StoryEditor';
+import ImageCropperModal from '../../components/ImageCropperModal';
 
 import { useTheme } from '../../context/ThemeContext';
 import { API_URL } from '../../config/api';
@@ -42,7 +43,15 @@ export default function Chat() {
 
     // Personalization State
     const [chatBgUrl, setChatBgUrl] = useState<string | null>(null);
+    const [chatBgSize, setChatBgSize] = useState('cover');
+    const [chatBgPosition, setChatBgPosition] = useState('50% 50%');
+    const [showCropper, setShowCropper] = useState(false);
+    const [pendingBgUrl, setPendingBgUrl] = useState<string | null>(null);
     const bgInputRef = useRef<HTMLInputElement>(null);
+
+    // Profile Picture State
+    const [profilePic, setProfilePic] = useState<string | null>(null);
+    const profilePicInputRef = useRef<HTMLInputElement>(null);
 
     const isTeddy = theme === 'teddy';
     const isSpidey = theme === 'spiderman';
@@ -253,7 +262,16 @@ export default function Chat() {
         }
 
         const savedBg = localStorage.getItem(`chatBg_${storedUserId}`);
-        if (savedBg) setChatBgUrl(savedBg);
+        if (savedBg) {
+            setChatBgUrl(savedBg);
+            const savedBgSize = localStorage.getItem(`chatBgSize_${storedUserId}`);
+            const savedBgPos = localStorage.getItem(`chatBgPos_${storedUserId}`);
+            if (savedBgSize) setChatBgSize(savedBgSize);
+            if (savedBgPos) setChatBgPosition(savedBgPos);
+        }
+
+        const savedPic = localStorage.getItem(`profilePic_${storedUserId}`);
+        if (savedPic) setProfilePic(savedPic);
 
         setToken(storedToken);
         setUserId(storedUserId);
@@ -325,25 +343,56 @@ export default function Chat() {
         setInputText(prev => prev + emojiData.emoji);
     };
 
-    // Chat Background Upload
+    // Chat Background Upload – opens cropper first
     const handleBgUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
             const reader = new FileReader();
             reader.onloadend = () => {
-                const base64 = reader.result as string;
-                setChatBgUrl(base64);
-                if (userId) {
-                    localStorage.setItem(`chatBg_${userId}`, base64);
-                }
+                setPendingBgUrl(reader.result as string);
+                setShowCropper(true);
             };
             reader.readAsDataURL(file);
         }
+        // Reset so same file can be re-selected
+        if (bgInputRef.current) bgInputRef.current.value = '';
+    };
+
+    const applyBackground = ({ bgSize, bgPosition }: { bgSize: string; bgPosition: string }) => {
+        if (!pendingBgUrl) return;
+        setChatBgUrl(pendingBgUrl);
+        setChatBgSize(bgSize);
+        setChatBgPosition(bgPosition);
+        if (userId) {
+            localStorage.setItem(`chatBg_${userId}`, pendingBgUrl);
+            localStorage.setItem(`chatBgSize_${userId}`, bgSize);
+            localStorage.setItem(`chatBgPos_${userId}`, bgPosition);
+        }
+        setShowCropper(false);
+        setPendingBgUrl(null);
     };
 
     const removeBg = () => {
         setChatBgUrl(null);
-        if (userId) localStorage.removeItem(`chatBg_${userId}`);
+        if (userId) {
+            localStorage.removeItem(`chatBg_${userId}`);
+            localStorage.removeItem(`chatBgSize_${userId}`);
+            localStorage.removeItem(`chatBgPos_${userId}`);
+        }
+    };
+
+    // Profile Picture Upload
+    const handleProfilePicUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                const base64 = reader.result as string;
+                setProfilePic(base64);
+                if (userId) localStorage.setItem(`profilePic_${userId}`, base64);
+            };
+            reader.readAsDataURL(file);
+        }
     };
 
     const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -403,6 +452,15 @@ export default function Chat() {
                 )}
             </AnimatePresence>
 
+            {/* ImageCropper Modal */}
+            {showCropper && pendingBgUrl && (
+                <ImageCropperModal
+                    imageUrl={pendingBgUrl}
+                    onApply={applyBackground}
+                    onClose={() => { setShowCropper(false); setPendingBgUrl(null); }}
+                />
+            )}
+
             {/* ================= LEFT SIDEBAR ================= */}
             <div className={`
                 ${showMobileChat ? 'hidden' : 'flex'} 
@@ -410,10 +468,29 @@ export default function Chat() {
             `}>
                 {/* Profile Header */}
                 <div className={`h-16 flex items-center justify-between px-4 border-b ${s.header}`}>
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-lg border-2 border-white cursor-pointer relative shadow-sm ${s.avatar}`}>
-                        {isTeddy ? 'TB' : isSpidey ? 'SM' : isSpiderGwen ? 'SG' : 'HK'}
+                    {/* Clickable Avatar / Profile Picture */}
+                    <div
+                        className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-lg border-2 border-white cursor-pointer relative shadow-sm overflow-hidden group ${s.avatar}`}
+                        onClick={() => profilePicInputRef.current?.click()}
+                        title="Click to change profile picture"
+                    >
+                        {profilePic ? (
+                            <img src={profilePic} alt="Profile" className="w-full h-full object-cover" />
+                        ) : (
+                            <span>{isTeddy ? 'TB' : isSpidey ? 'SM' : isSpiderGwen ? 'SG' : 'HK'}</span>
+                        )}
+                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                            <span className="text-white text-[9px] font-bold">EDIT</span>
+                        </div>
                         <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></span>
                     </div>
+                    <input
+                        type="file"
+                        ref={profilePicInputRef}
+                        className="hidden"
+                        accept="image/*"
+                        onChange={handleProfilePicUpload}
+                    />
                     <div className="flex gap-4 items-center">
                         <button
                             suppressHydrationWarning
@@ -512,9 +589,14 @@ export default function Chat() {
             <div
                 className={`
                     ${showMobileChat ? 'flex' : 'hidden'} 
-                    md:flex flex-1 flex-col relative transition-colors duration-500 bg-cover bg-center ${!chatBgUrl ? s.chatArea : ''}
+                    md:flex flex-1 flex-col relative transition-colors duration-500 ${!chatBgUrl ? s.chatArea : ''}
                 `}
-                style={chatBgUrl ? { backgroundImage: `url(${chatBgUrl})` } : {}}
+                style={chatBgUrl ? {
+                    backgroundImage: `url(${chatBgUrl})`,
+                    backgroundSize: chatBgSize,
+                    backgroundPosition: chatBgPosition,
+                    backgroundRepeat: 'no-repeat',
+                } : {}}
             >
                 {/* Chat Background Pattern (Fallback if no custom bg) */}
                 {!chatBgUrl && (
