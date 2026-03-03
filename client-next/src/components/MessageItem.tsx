@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Heart, CheckCheck, EyeOff, Download } from 'lucide-react';
+import { TikTokEmbed, InstagramEmbed } from 'react-social-media-embed';
 
 interface Message {
     content: string;
@@ -30,6 +31,20 @@ const MessageItem = ({ message, isOwn, darkMode }: MessageItemProps) => {
     const isAudio = message.type === 'audio';
     const isFile = message.type === 'file';
     const isSticker = message.type === 'sticker';
+    const isText = message.type === 'text';
+
+    const getSocialMediaType = (content: string) => {
+        try {
+            const url = new URL(content);
+            if (url.hostname.includes('tiktok.com')) return 'tiktok';
+            if (url.hostname.includes('instagram.com')) return 'instagram';
+            return null;
+        } catch {
+            return null;
+        }
+    };
+
+    const socialMediaType = isText ? getSocialMediaType(message.content) : null;
 
     const formatTime = (date: string) => new Date(date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
@@ -207,6 +222,14 @@ const MessageItem = ({ message, isOwn, darkMode }: MessageItemProps) => {
                                 📁 View Attachment
                             </a>
                         )}
+                    </div>
+                ) : socialMediaType === 'tiktok' ? (
+                    <div className="flex justify-center w-full min-w-[300px] mt-1 mb-2">
+                        <TikTokEmbed url={message.content} width="100%" />
+                    </div>
+                ) : socialMediaType === 'instagram' ? (
+                    <div className="flex justify-center w-full min-w-[320px] mt-1 mb-2 bg-white rounded-lg overflow-hidden">
+                        <InstagramEmbed url={message.content} width="100%" />
                     </div>
                 ) : (
                     <p className="font-cute leading-relaxed whitespace-pre-wrap">{message.content}</p>
