@@ -3,8 +3,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Heart, MessageCircle, Share2, ArrowLeft } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import axios from 'axios';
-import { API_URL } from '../../config/api';
 import { useTheme } from '../../context/ThemeContext';
 
 interface Reel {
@@ -29,6 +27,7 @@ export default function ReelsPage() {
     const [page, setPage] = useState(1);
     const [loading, setLoading] = useState(false);
     const [hasMore, setHasMore] = useState(true);
+    const [afterToken, setAfterToken] = useState<string | null>(null);
     const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
     // Track which reel is currently visible
@@ -47,38 +46,53 @@ export default function ReelsPage() {
     }, []);
 
     const fetchReels = async (pageNum: number, uid: string) => {
-        if (loading || !hasMore) return;
+        if (loading || (!hasMore && pageNum !== 1)) return;
         setLoading(true);
         try {
-            // First time load: Try to fetch external content for demonstration if database is empty
-            if (pageNum === 1 && reels.length === 0) {
-                await fetchExternalMock(uid);
+            // Fetching from a public subbreddit that posts TikToks (Zero Storage Option)
+            const url = `https://www.reddit.com/r/TikTokCringe/hot.json?limit=10${afterToken ? `&after=${afterToken}` : ''}`;
+
+            const res = await fetch(url);
+            const data = await res.json();
+
+            const posts = data.data.children;
+            const newAfter = data.data.after;
+
+            if (!newAfter || posts.length === 0) {
+                setHasMore(false);
+            } else {
+                setAfterToken(newAfter);
             }
 
-            const res = await axios.get(`${API_URL}/api/feed/reels/${uid}?page=${pageNum}&limit=5`);
-            const newReels = res.data;
+            // Parse and format reddit posts into our Reel format
+            const formattedReels: Reel[] = posts
+                .filter((p: any) => p.data.is_video && p.data.media?.reddit_video?.fallback_url)
+                .map((p: any) => ({
+                    _id: p.data.id,
+                    userId: {
+                        _id: p.data.author,
+                        username: `u/${p.data.author}`,
+                        profilePic: `https://api.dicebear.com/7.x/avataaars/svg?seed=${p.data.author}`
+                    },
+                    mediaUrl: p.data.media.reddit_video.fallback_url,
+                    caption: p.data.title,
+                    likes: Array.from({ length: 0 }), // Mock likes for local UI state
+                    commentsCount: p.data.num_comments,
+                    views: p.data.ups // using upvotes as mock views marker
+                }));
 
-            if (newReels.length < 5) setHasMore(false);
+            setReels(prev => pageNum === 1 ? formattedReels : [...prev, ...formattedReels]);
 
-            setReels(prev => pageNum === 1 ? newReels : [...prev, ...newReels]);
-
-            if (pageNum === 1 && newReels.length > 0) {
-                setActiveReelId(newReels[0]._id);
+            if (pageNum === 1 && formattedReels.length > 0) {
+                setActiveReelId(formattedReels[0]._id);
             }
         } catch (err) {
-            console.error("Failed to fetch reels", err);
+            console.error("Failed to fetch public reels", err);
+            setHasMore(false); // Stop trying if API blocked us
         } finally {
             setLoading(false);
         }
     };
-
-    const fetchExternalMock = async (uid: string) => {
-        try {
-            await axios.post(`${API_URL}/api/feed/fetch-external`, { userId: uid });
-        } catch (e) {
-            console.error(e);
-        }
-    }
 
     const loadMore = () => {
         if (!loading && hasMore && currentUserId) {
@@ -104,23 +118,16 @@ export default function ReelsPage() {
 
     const handleInteract = async (reelId: string, action: 'like' | 'unlike' | 'view') => {
         if (!currentUserId) return;
-        try {
-            await axios.post(`${API_URL}/api/feed/${reelId}/interact`, {
-                action,
-                userId: currentUserId
-            });
 
-            if (action === 'like') {
-                setReels(prev => prev.map(r =>
-                    r._id === reelId ? { ...r, likes: [...r.likes, currentUserId] } : r
-                ));
-            } else if (action === 'unlike') {
-                setReels(prev => prev.map(r =>
-                    r._id === reelId ? { ...r, likes: r.likes.filter(id => id !== currentUserId) } : r
-                ));
-            }
-        } catch (err) {
-            console.error("Interaction failed", err);
+        // Zero Storage Option: Only update local state, NEVER hit our backend
+        if (action === 'like') {
+            setReels(prev => prev.map(r =>
+                r._id === reelId ? { ...r, likes: [...r.likes, currentUserId] } : r
+            ));
+        } else if (action === 'unlike') {
+            setReels(prev => prev.map(r =>
+                r._id === reelId ? { ...r, likes: r.likes.filter(id => id !== currentUserId) } : r
+            ));
         }
     };
 
@@ -282,7 +289,9 @@ function ReelPlayer({ reel, isActive, currentUserId, onInteract, onVisible }: an
                     <div className="p-3 bg-black/20 backdrop-blur-md rounded-full group-hover:bg-black/40 transition-all">
                         <Heart size={28} className={`transition-colors duration-300 ${isLiked ? 'fill-red-500 text-red-500' : 'text-white'}`} />
                     </div>
-                    <span className="text-white text-xs font-semibold drop-shadow-md">{typeof reel.likes === 'number' ? reel.likes : reel.likes?.length || 0}</span>
+                    <span className="text-white text-xs font-semibold drop-shadow-md">
+                        {reel.views + (isLiked ? 1 : 0)} {/* Mocking likes based on reddit upvotes */}
+                    </span>
                 </button>
 
                 <button className="flex flex-col items-center gap-1 group">
