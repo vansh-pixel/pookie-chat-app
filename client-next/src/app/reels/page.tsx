@@ -109,7 +109,7 @@ export default function ReelsPage() {
                 },
                 mediaUrl: vid.url,
                 caption: vid.title,
-                likes: Array.from({ length: 0 }),
+                likes: [],
                 commentsCount: vid.comments,
                 views: vid.views
             }));
@@ -260,6 +260,7 @@ function ReelPlayer({ reel, isActive, currentUserId, onInteract, onVisible }: an
 
         if (isActive) {
             vid.currentTime = 0;
+            // Attempt auto-play. Catch block handles when browser blocks sound/auto-play policies
             vid.play().catch(e => console.log("Auto-play prevented", e));
         } else {
             vid.pause();
@@ -320,16 +321,16 @@ function ReelPlayer({ reel, isActive, currentUserId, onInteract, onVisible }: an
 
             {/* Right Sidebar: Actions */}
             <div className="absolute right-4 bottom-20 flex flex-col items-center gap-6">
-                <button onClick={handleLike} className="flex flex-col items-center gap-1 group">
+                <button onClick={handleLike} className="flex flex-col items-center gap-1 group z-50">
                     <div className="p-3 bg-black/20 backdrop-blur-md rounded-full group-hover:bg-black/40 transition-all">
                         <Heart size={28} className={`transition-colors duration-300 ${isLiked ? 'fill-red-500 text-red-500' : 'text-white'}`} />
                     </div>
                     <span className="text-white text-xs font-semibold drop-shadow-md">
-                        {reel.views + (isLiked ? 1 : 0)} {/* Mocking likes based on reddit upvotes */}
+                        {reel.views + (isLiked ? 1 : 0)} {/* Mocking likes based on views */}
                     </span>
                 </button>
 
-                <button className="flex flex-col items-center gap-1 group">
+                <button className="flex flex-col items-center gap-1 group z-50">
                     <div className="p-3 bg-black/20 backdrop-blur-md rounded-full group-hover:bg-black/40 transition-all">
                         <MessageCircle size={28} className="text-white fill-white/20" />
                     </div>

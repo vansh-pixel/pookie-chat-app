@@ -1,0 +1,123 @@
+﻿
+> client-next@0.1.0 build
+> next build
+
+node.exe : ΓÜá 
+Warning: Next.js 
+inferred your 
+workspace root, but 
+it may not be correct.
+At line:1 char:1
++ & "C:\nvm4w\nodejs/n
+ode.exe" "C:\nvm4w\nod
+ejs/node_modules/npm/b
+in/np ...
++ ~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~
+~~~~~
+    + CategoryInfo    
+          : 
+NotSpecified: (Γ    
+Üá Warning: Ne...not  
+   be 
+correct.:String) [    
+], RemoteException
+    + 
+FullyQualifiedError   
+ Id : 
+NativeCommandErr    or
+ 
+ We detected multiple 
+lockfiles and 
+selected the 
+directory of C:\Users\
+VANSH\OneDrive\Desktop
+\mine\pookie-chat-app\
+package-lock.json as 
+the root directory.
+ To silence this 
+warning, set 
+`turbopack.root` in 
+your Next.js config, 
+or consider removing 
+one of the lockfiles 
+if it's not needed.
+   See https://nextjs.
+org/docs/app/api-refer
+ence/config/next-confi
+g-js/turbopack#root-di
+rectory for more 
+information.
+ Detected additional 
+lockfiles: 
+   * C:\Users\VANSH\On
+eDrive\Desktop\mine\po
+okie-chat-app\client-n
+ext\package-lock.json
+
+Γû▓ Next.js 16.1.6 (Turbopack)
+
+  Creating an optimized production build ...
+Γ£ô Compiled successfully in 29.5s
+  Running TypeScript ...
+Failed to compile.
+
+./src/app/chat/page.ts
+x:722:29
+Type error: Type '{ 
+size: number; 
+onClick: () => void; 
+className: string; 
+title: string; }' is 
+not assignable to 
+type 
+'IntrinsicAttributes 
+& Omit<LucideProps, 
+"ref"> & RefAttributes
+<SVGSVGElement>'.
+  Property 'title' 
+does not exist on 
+type 
+'IntrinsicAttributes 
+& Omit<LucideProps, 
+"ref"> & RefAttributes
+<SVGSVGElement>'.
+
+[0m [90m 720 |[39m 
+                      
+      
+onClick[33m=[39m{() 
+[33m=>[39m setShowDr
+awingModal([36mtrue[
+39m)}
+ [90m 721 |[39m     
+                      
+  className[33m=[39m
+{[32m`cursor-pointer 
+transition-colors 
+${isTeddy ? 
+'text-amber-400 
+hover:text-amber-600' 
+: 'text-gray-500 hover
+:text-hk-pink'}`[39m}
+[31m[1m>[22m[39m[
+90m 722 |[39m        
+                     t
+itle[33m=[39m[32m"D
+raw a Sticker"[39m
+ [90m     |[39m     
+                      
+  [31m[1m^[22m[39m
+ [90m 723 |[39m     
+                    
+[33m/[39m[33m>[39m
+ [90m 724 |[39m     
+                [33m<
+[39m[33m/[39m[33md
+iv[39m[33m>[39m
+ [90m 725 |[39m[0m
+Next.js build worker 
+exited with code: 1 
+and signal: null
+

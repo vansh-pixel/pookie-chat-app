@@ -58,10 +58,12 @@ mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost:27017/pookie-chat
 
 const messageRoutes = require('./routes/messages');
 const storyRoutes = require('./routes/stories');
+const feedRoutes = require('./routes/feed');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/messages', messageRoutes);
 app.use('/api/stories', storyRoutes);
+app.use('/api/feed', feedRoutes);
 
 // Socket.io
 io.on('connection', (socket) => {
