@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import io, { Socket } from 'socket.io-client';
 import axios from 'axios';
-import { Send, Heart, LogOut, Search, Phone, Video, MoreVertical, Smile, Paperclip, Moon, Sun } from 'lucide-react';
+import { Send, Heart, LogOut, Search, Phone, Video, MoreVertical, Smile, Paperclip, Moon, Sun, Palette } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import EmojiPicker, { Theme as EmojiTheme } from 'emoji-picker-react';
@@ -13,6 +13,7 @@ import Notification from '../../components/Notification';
 import StoryViewer from '../../components/StoryViewer';
 import StoryEditor from '../../components/StoryEditor';
 import ImageCropperModal from '../../components/ImageCropperModal';
+import DrawingModal from '../../components/DrawingModal';
 
 import { useTheme } from '../../context/ThemeContext';
 import { API_URL } from '../../config/api';
@@ -40,6 +41,9 @@ export default function Chat() {
     const [showStoryEditor, setShowStoryEditor] = useState(false);
     const [showStoryViewer, setShowStoryViewer] = useState(false);
     const [viewerGroupIndex, setViewerGroupIndex] = useState(0);
+
+    // Drawing State
+    const [showDrawingModal, setShowDrawingModal] = useState(false);
 
     // Personalization State
     const [chatBgUrl, setChatBgUrl] = useState<string | null>(null);
@@ -418,6 +422,11 @@ export default function Chat() {
         }
     };
 
+    const handleSendDrawing = (base64Data: string) => {
+        setShowDrawingModal(false);
+        sendMessage(base64Data, 'sticker');
+    };
+
     return (
         <div className={`flex h-screen overflow-hidden font-cute relative transition-colors duration-500 ${s.bg}`}>
             <AnimatePresence>
@@ -458,6 +467,15 @@ export default function Chat() {
                     imageUrl={pendingBgUrl}
                     onApply={applyBackground}
                     onClose={() => { setShowCropper(false); setPendingBgUrl(null); }}
+                />
+            )}
+
+            {/* Drawing Modal */}
+            {showDrawingModal && (
+                <DrawingModal
+                    onClose={() => setShowDrawingModal(false)}
+                    onSend={handleSendDrawing}
+                    darkMode={darkMode}
                 />
             )}
 
@@ -694,6 +712,14 @@ export default function Chat() {
                                 </div>
                             )}
                         </AnimatePresence>
+                    </div>
+
+                    <div className="relative" title="Draw a Sticker">
+                        <Palette
+                            size={26}
+                            onClick={() => setShowDrawingModal(true)}
+                            className={`cursor-pointer transition-colors ${isTeddy ? 'text-amber-400 hover:text-amber-600' : 'text-gray-500 hover:text-hk-pink'}`}
+                        />
                     </div>
 
                     <div className="relative">

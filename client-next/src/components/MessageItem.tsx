@@ -1,12 +1,12 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Heart, CheckCheck } from 'lucide-react';
+import { Heart, CheckCheck, EyeOff, Download } from 'lucide-react';
 
 interface Message {
     content: string;
-    type: 'text' | 'audio' | 'missYou' | 'file';
+    type: 'text' | 'audio' | 'missYou' | 'file' | 'sticker';
     timestamp: string;
     sender: string;
     read?: boolean;
@@ -20,11 +20,64 @@ interface MessageItemProps {
 
 const MessageItem = ({ message, isOwn, darkMode }: MessageItemProps) => {
     const [isOpen, setIsOpen] = useState(false);
+
+    // Sticker context menu state
+    const [showStickerMenu, setShowStickerMenu] = useState(false);
+    const [isHidden, setIsHidden] = useState(false);
+    const pressTimer = useRef<NodeJS.Timeout | null>(null);
+
     const isMissYou = message.type === 'missYou';
     const isAudio = message.type === 'audio';
     const isFile = message.type === 'file';
+    const isSticker = message.type === 'sticker';
 
     const formatTime = (date: string) => new Date(date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+    // Close menu when clicking outside
+    useEffect(() => {
+        const handleClickOutside = () => setShowStickerMenu(false);
+        if (showStickerMenu) {
+            window.addEventListener('click', handleClickOutside);
+        }
+        return () => window.removeEventListener('click', handleClickOutside);
+    }, [showStickerMenu]);
+
+    const handleStickerContextMenu = (e: React.MouseEvent) => {
+        e.preventDefault(); // Prevent default browser context menu
+        setShowStickerMenu(true);
+    };
+
+    const handleTouchStart = () => {
+        pressTimer.current = setTimeout(() => {
+            setShowStickerMenu(true);
+        }, 500); // 500ms long press
+    };
+
+    const handleTouchEnd = () => {
+        if (pressTimer.current) {
+            clearTimeout(pressTimer.current);
+            pressTimer.current = null;
+        }
+    };
+
+    const saveSticker = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        const a = document.createElement('a');
+        a.href = message.content;
+        a.download = `sticker-${Date.now()}.png`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setShowStickerMenu(false);
+    };
+
+    const hideSticker = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        setIsHidden(true);
+        setShowStickerMenu(false);
+    };
+
+    if (isHidden) return null;
 
     // 1. Special "Miss You" Envelope Style
     if (isMissYou) {
@@ -72,7 +125,63 @@ const MessageItem = ({ message, isOwn, darkMode }: MessageItemProps) => {
         );
     }
 
-    // 2. Standard WhatsApp/Instagram Bubble Style
+    // 2. Custom Sticker Style
+    if (isSticker) {
+        return (
+            <motion.div
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ type: "spring", stiffness: 200, damping: 20 }}
+                className={`flex ${isOwn ? 'justify-end' : 'justify-start'} mb-2`}
+            >
+                <div className="relative group flex flex-col items-end">
+                    <img
+                        src={message.content}
+                        alt="Sticker"
+                        className="w-40 h-40 md:w-56 md:h-56 object-contain drop-shadow-lg cursor-pointer transition-transform hover:scale-105"
+                        onContextMenu={handleStickerContextMenu}
+                        onTouchStart={handleTouchStart}
+                        onTouchEnd={handleTouchEnd}
+                        onTouchCancel={handleTouchEnd}
+                    />
+
+                    <div className={`flex items-center gap-1 mt-1 text-[10px] ${darkMode ? 'text-gray-400' : 'text-gray-500'} bg-black/10 px-2 py-0.5 rounded-full backdrop-blur-sm self-[${isOwn ? 'flex-end' : 'flex-start'}]`}>
+                        <span>{formatTime(message.timestamp)}</span>
+                        {isOwn && <CheckCheck size={14} className={message.read ? "text-green-500 stroke-[3]" : ""} />}
+                    </div>
+
+                    {/* Context Menu Overlay */}
+                    <AnimatePresence>
+                        {showStickerMenu && (
+                            <motion.div
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: 10 }}
+                                className={`absolute z-50 ${isOwn ? 'right-0 top-full' : 'left-0 top-full'} mt-2 bg-white dark:bg-gray-800 rounded-xl shadow-xl border dark:border-gray-700 overflow-hidden w-36`}
+                            >
+                                <button
+                                    onClick={saveSticker}
+                                    className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                                >
+                                    <Download size={16} />
+                                    <span>Save</span>
+                                </button>
+                                <button
+                                    onClick={hideSticker}
+                                    className="w-full flex items-center gap-3 px-4 py-3 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 border-t dark:border-gray-700 transition-colors"
+                                >
+                                    <EyeOff size={16} />
+                                    <span>Hide</span>
+                                </button>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
+                </div>
+            </motion.div>
+        );
+    }
+
+    // 3. Standard WhatsApp/Instagram Bubble Style
     return (
         <motion.div
             initial={{ opacity: 0, y: 15 }}
