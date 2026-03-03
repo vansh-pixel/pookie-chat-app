@@ -49,46 +49,81 @@ export default function ReelsPage() {
         if (loading || (!hasMore && pageNum !== 1)) return;
         setLoading(true);
         try {
-            // Fetching from a public subbreddit that posts TikToks (Zero Storage Option)
-            const url = `https://www.reddit.com/r/TikTokCringe/hot.json?limit=10${afterToken ? `&after=${afterToken}` : ''}`;
+            // Since public APIs like Reddit/TikTok are often blocked by CORS or network filters 
+            // on certain deployments, we will use a reliable set of safe, beautiful vertical MP4s 
+            // hosted by Pexels for our Zero-Storage demonstration.
 
-            const res = await fetch(url);
-            const data = await res.json();
+            const MOCK_VIDEOS = [
+                {
+                    id: 'vid1',
+                    author: 'NatureLover',
+                    url: 'https://player.vimeo.com/external/494254201.sd.mp4?s=d120a2e5d1656ad64c9dcec0765d706a142dd260&profile_id=165&oauth2_token_id=57447761',
+                    title: 'Beautiful ocean waves 🌊 #nature',
+                    views: 45200,
+                    comments: 124
+                },
+                {
+                    id: 'vid2',
+                    author: 'TravelDreams',
+                    url: 'https://player.vimeo.com/external/403612503.sd.mp4?s=91079d375354be4fe305cae1d52d3a39151e06fe&profile_id=165&oauth2_token_id=57447761',
+                    title: 'Wandering through the mountains 🏔️ #travel',
+                    views: 89000,
+                    comments: 432
+                },
+                {
+                    id: 'vid3',
+                    author: 'CutePets',
+                    url: 'https://player.vimeo.com/external/432174352.sd.mp4?s=1246db1ba66c8fb73bde9c9d073041a3cd432851&profile_id=165&oauth2_token_id=57447761',
+                    title: 'Puppy playing in the grass 🐶❤️ #cute',
+                    views: 120500,
+                    comments: 890
+                },
+                {
+                    id: 'vid4',
+                    author: 'CityLights',
+                    url: 'https://player.vimeo.com/external/371900139.sd.mp4?s=1fb8041c3b1eaadea58c0ff38914ba0ca444fe64&profile_id=165&oauth2_token_id=57447761',
+                    title: 'Night drive through the city 🌃',
+                    views: 32000,
+                    comments: 88
+                },
+                {
+                    id: 'vid5',
+                    author: 'FoodieLife',
+                    url: 'https://player.vimeo.com/external/436665042.sd.mp4?s=1ee8c2da22c07920ab4de7b4e6d4001ebee7eeeb&profile_id=165&oauth2_token_id=57447761',
+                    title: 'Making the perfect pouring coffee ☕️ #barista',
+                    views: 56000,
+                    comments: 210
+                }
+            ];
 
-            const posts = data.data.children;
-            const newAfter = data.data.after;
+            // Simulate network delay
+            await new Promise(r => setTimeout(r, 800));
 
-            if (!newAfter || posts.length === 0) {
-                setHasMore(false);
-            } else {
-                setAfterToken(newAfter);
-            }
-
-            // Parse and format reddit posts into our Reel format
-            const formattedReels: Reel[] = posts
-                .filter((p: any) => p.data.is_video && p.data.media?.reddit_video?.fallback_url)
-                .map((p: any) => ({
-                    _id: p.data.id,
-                    userId: {
-                        _id: p.data.author,
-                        username: `u/${p.data.author}`,
-                        profilePic: `https://api.dicebear.com/7.x/avataaars/svg?seed=${p.data.author}`
-                    },
-                    mediaUrl: p.data.media.reddit_video.fallback_url,
-                    caption: p.data.title,
-                    likes: Array.from({ length: 0 }), // Mock likes for local UI state
-                    commentsCount: p.data.num_comments,
-                    views: p.data.ups // using upvotes as mock views marker
-                }));
+            // Format into our Reel structure
+            const formattedReels: Reel[] = MOCK_VIDEOS.map((vid) => ({
+                _id: vid.id + '_' + pageNum, // ensure unique keys if we loop
+                userId: {
+                    _id: vid.author,
+                    username: `@${vid.author}`,
+                    profilePic: `https://api.dicebear.com/7.x/avataaars/svg?seed=${vid.author}`
+                },
+                mediaUrl: vid.url,
+                caption: vid.title,
+                likes: Array.from({ length: 0 }),
+                commentsCount: vid.comments,
+                views: vid.views
+            }));
 
             setReels(prev => pageNum === 1 ? formattedReels : [...prev, ...formattedReels]);
 
             if (pageNum === 1 && formattedReels.length > 0) {
                 setActiveReelId(formattedReels[0]._id);
             }
+
+            // For demo purposes, let's just loop the 5 videos endlessly
+            // In a real app we'd fetch a new page from the API here
         } catch (err) {
             console.error("Failed to fetch public reels", err);
-            setHasMore(false); // Stop trying if API blocked us
         } finally {
             setLoading(false);
         }
