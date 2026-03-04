@@ -177,7 +177,8 @@ router.post('/fetch-external', async (req, res) => {
 router.get('/public-reels', async (req, res) => {
     try {
         const afterToken = req.query.after || '';
-        const url = `https://www.reddit.com/r/TikTokCringe/hot.json?limit=15${afterToken ? `&after=${afterToken}` : ''}`;
+        const safeSubreddits = 'aww+MadeMeSmile+funny+TikTokCats+TikTokDogs+TikTokPets';
+        const url = `https://www.reddit.com/r/${safeSubreddits}/hot.json?limit=50${afterToken ? `&after=${afterToken}` : ''}`;
         
         const response = await fetch(url, {
             headers: {
