@@ -177,6 +177,7 @@ function ReelPlayer({ reel, isActive, currentUserId, onInteract, onVisible }: an
     const containerRef = useRef<HTMLDivElement>(null);
     const [isLiked, setIsLiked] = useState(false);
     const [viewRegistered, setViewRegistered] = useState(false);
+    const [isMuted, setIsMuted] = useState(true); // Default to true so browser allows autoplay
 
     useEffect(() => {
         if (currentUserId && reel.likes) {
@@ -224,8 +225,19 @@ function ReelPlayer({ reel, isActive, currentUserId, onInteract, onVisible }: an
     const togglePlay = () => {
         const vid = videoRef.current;
         if (!vid) return;
-        if (vid.paused) vid.play();
-        else vid.pause();
+
+        // Tapping usually either toggles mute or toggle play depending on the platform UI. 
+        // We'll toggle play, but also importantly, toggle mute off if they expressly interact.
+        if (vid.paused) {
+            vid.play();
+        } else {
+            // If it's playing and we tap... TikTok pauses. 
+            // So we pause. 
+            vid.pause();
+        }
+
+        // If they interacted with the video, we can safely unmute if they haven't yet
+        if (isMuted) setIsMuted(false);
     };
 
     const handleLike = () => {
@@ -248,8 +260,15 @@ function ReelPlayer({ reel, isActive, currentUserId, onInteract, onVisible }: an
                 playsInline
                 onClick={togglePlay}
                 autoPlay={isActive}
-                muted={false} // May require interaction policy bypass or UI toggle in reality
+                muted={isMuted} // Muted is required by Chrome/Safari for strict autoplay
             />
+
+            {/* Mute Indicator */}
+            {isMuted && (
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-black/50 text-white px-4 py-2 rounded-full pointer-events-none text-sm font-bold backdrop-blur animate-pulse">
+                    Tap to Unmute
+                </div>
+            )}
 
             {/* Bottom Overlay: Caption & User */}
             <div className="absolute bottom-0 left-0 w-full p-4 pt-20 bg-gradient-to-t from-black/80 via-black/40 to-transparent pointer-events-none">
