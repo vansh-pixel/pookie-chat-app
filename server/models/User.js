@@ -9,6 +9,7 @@ const userSchema = new mongoose.Schema({
   chatBgUrl: { type: String },
   chatBgSize: { type: String, default: 'cover' },
   chatBgPosition: { type: String, default: '50% 50%' },
+  lastSeen: { type: Date, default: Date.now }
 });
 
 userSchema.pre('save', async function () {

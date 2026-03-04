@@ -61,7 +61,8 @@ router.get('/user/:id', async (req, res) => {
             profilePic: user.profilePic,
             chatBgUrl: user.chatBgUrl,
             chatBgSize: user.chatBgSize,
-            chatBgPosition: user.chatBgPosition
+            chatBgPosition: user.chatBgPosition,
+            lastSeen: user.lastSeen
         });
     } catch (err) {
         console.error("Error in GET /user/:id:", err);

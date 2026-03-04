@@ -66,12 +66,29 @@ app.use('/api/stories', storyRoutes);
 app.use('/api/feed', feedRoutes);
 
 // Socket.io
+// Map to track active connections: socket.id -> userId
+const onlineUsers = new Map();
+
 io.on('connection', (socket) => {
   console.log('User connected:', socket.id);
 
-  socket.on('join_room', (userId) => {
+  socket.on('join_room', async (userId) => {
     socket.join(userId);
+    onlineUsers.set(socket.id, userId);
     console.log(`User ${userId} joined room`);
+
+    try {
+      // Find user to get partnerId, mark user as online to partner
+      const user = await User.findById(userId);
+      if (user && user.partnerId) {
+        io.to(user.partnerId).emit('user_status', {
+          userId,
+          online: true
+        });
+      }
+    } catch (err) {
+      console.error("Error broadcasting online status on join:", err);
+    }
   });
 
   socket.on('send_message', async (data) => {
@@ -142,9 +159,35 @@ io.on('connection', (socket) => {
     }
   });
 
-  socket.on('disconnect', () => {
+  socket.on('disconnect', async () => {
     console.log('User disconnected:', socket.id);
+    const userId = onlineUsers.get(socket.id);
+    
+    if (userId) {
+      onlineUsers.delete(socket.id);
+      try {
+        const lastSeen = new Date();
+        const user = await User.findByIdAndUpdate(userId, { lastSeen }, { new: true });
+        
+        if (user && user.partnerId) {
+          io.to(user.partnerId).emit('user_status', {
+            userId,
+            online: false,
+            lastSeen
+          });
+        }
+      } catch (err) {
+        console.error("Error handling disconnect & lastSeen:", err);
+      }
+    }
   });
+});
+
+// A quick helper to check if a specific user is currently online
+app.get('/api/auth/status/:id', (req, res) => {
+    const userId = req.params.id;
+    const isOnline = Array.from(onlineUsers.values()).includes(userId);
+    res.json({ online: isOnline });
 });
 
 // 404 Catch-All Logger

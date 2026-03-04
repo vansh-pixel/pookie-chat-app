@@ -57,6 +57,10 @@ export default function Chat() {
     const [partnerChatBgSize, setPartnerChatBgSize] = useState('cover');
     const [partnerChatBgPosition, setPartnerChatBgPosition] = useState('50% 50%');
 
+    // Online Status State
+    const [isPartnerOnline, setIsPartnerOnline] = useState(false);
+    const [partnerLastSeen, setPartnerLastSeen] = useState<string | null>(null);
+
     // Profile Picture State
     const [profilePic, setProfilePic] = useState<string | null>(null);
     const [partnerProfilePic, setPartnerProfilePic] = useState<string | null>(null);
@@ -236,6 +240,13 @@ export default function Chat() {
             setPartnerChatBgUrl(res.data.chatBgUrl || null);
             setPartnerChatBgSize(res.data.chatBgSize || 'cover');
             setPartnerChatBgPosition(res.data.chatBgPosition || '50% 50%');
+
+            // Initial last seen
+            if (res.data.lastSeen) setPartnerLastSeen(res.data.lastSeen);
+
+            // Check if they are currently online via our new endpoint
+            const statusRes = await axios.get(`${API_URL}/api/auth/status/${pid}`);
+            setIsPartnerOnline(statusRes.data.online);
         } catch (err) {
             console.error("Failed to fetch partner details", err);
             setPartnerUsername("My Pookie");
@@ -323,11 +334,22 @@ export default function Chat() {
             if (data.chatBgPosition !== undefined) setPartnerChatBgPosition(data.chatBgPosition);
         });
 
+        socket.on('user_status', (data) => {
+            // Only update if the status change is about our partner
+            if (data.userId === receiverId) {
+                setIsPartnerOnline(data.online);
+                if (data.lastSeen) {
+                    setPartnerLastSeen(data.lastSeen);
+                }
+            }
+        });
+
         return () => {
             socket.off('receive_message');
             socket.off('message_sent');
             socket.off('messages_read');
             socket.off('partner_profile_updated');
+            socket.off('user_status');
             socket.disconnect();
         };
     }, [router, receiverId]);
@@ -505,9 +527,30 @@ export default function Chat() {
         }
     };
 
-    const handleSendDrawing = (base64Data: string) => {
-        setShowDrawingModal(false);
-        sendMessage(base64Data, 'sticker');
+    const formatLastSeen = (dateString: string | null) => {
+        if (!dateString) return "Last seen recently";
+
+        const date = new Date(dateString);
+        const now = new Date();
+        const diffMs = now.getTime() - date.getTime();
+        const diffMins = Math.floor(diffMs / 60000);
+        const diffHrs = Math.floor(diffMins / 60);
+        const diffDays = Math.floor(diffHrs / 24);
+
+        if (diffMins < 1) return "Last seen just now";
+        if (diffMins < 60) return `Last seen ${diffMins}m ago`;
+
+        // Today check
+        const isToday = date.getDate() === now.getDate() &&
+            date.getMonth() === now.getMonth() &&
+            date.getFullYear() === now.getFullYear();
+
+        const timeString = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+        if (isToday) return `Last seen today at ${timeString}`;
+        if (diffDays === 1) return `Last seen yesterday at ${timeString}`;
+
+        return `Last seen ${date.toLocaleDateString()} at ${timeString}`;
     };
 
     return (
@@ -665,7 +708,12 @@ export default function Chat() {
                                     <p className={`text-sm truncate w-40 ${s.subtext}`}>Tap to chat...</p>
                                 </div>
                             </div>
-                            <div className="text-xs text-gray-400 font-bold">Now</div>
+                            <div className="flex flex-col items-end gap-1">
+                                <div className="text-xs text-gray-400 font-bold">Now</div>
+                                {isPartnerOnline && (
+                                    <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                                )}
+                            </div>
                         </div>
                     </div>
                     {/* Configuration Area */}
@@ -748,7 +796,15 @@ export default function Chat() {
                         <div>
                             <h3 className={`font-bold font-cute text-lg ${s.text}`}>{partnerUsername || "My Sakhi 💖"}</h3>
                             <p className={`text-xs flex items-center gap-1 font-medium ${s.subtext}`}>
-                                <span className="w-2 h-2 bg-green-500 rounded-full block animate-pulse"></span> Online
+                                {isPartnerOnline ? (
+                                    <>
+                                        <span className="w-2 h-2 bg-green-500 rounded-full block animate-pulse"></span> Online
+                                    </>
+                                ) : (
+                                    <>
+                                        <span className="w-2 h-2 bg-gray-400 rounded-full block"></span> {formatLastSeen(partnerLastSeen)}
+                                    </>
+                                )}
                             </p>
                         </div>
                     </div>
