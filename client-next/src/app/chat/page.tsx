@@ -574,7 +574,7 @@ export default function Chat() {
     };
 
     return (
-        <div className={`flex h-screen overflow-hidden font-cute relative transition-colors duration-500 ${s.bg}`}>
+        <div className={`flex h-[calc(100dvh-70px)] overflow-hidden font-cute relative transition-colors duration-500 ${s.bg}`}>
             <AnimatePresence>
                 {notification && (
                     <Notification
@@ -799,8 +799,8 @@ export default function Chat() {
                             )}
                         </div>
                         <div>
-                            <h3 className={`font-bold font-cute text-lg ${s.text}`}>{partnerUsername || "My Sakhi 💖"}</h3>
-                            <p className={`text-xs flex items-center gap-1 font-medium ${s.subtext}`}>
+                            <h3 className={`font-bold font-cute text-lg ${(chatBgUrl || partnerChatBgUrl) ? 'text-white' : s.text}`}>{partnerUsername || "My Sakhi 💖"}</h3>
+                            <p className={`text-xs flex items-center gap-1 font-medium ${(chatBgUrl || partnerChatBgUrl) ? 'text-gray-200' : s.subtext}`}>
                                 {isPartnerOnline ? (
                                     <>
                                         <span className="w-2 h-2 bg-green-500 rounded-full block animate-pulse"></span> Online
