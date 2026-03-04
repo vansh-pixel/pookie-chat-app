@@ -171,5 +171,35 @@ router.post('/fetch-external', async (req, res) => {
     }
 });
 
+// GET /api/feed/public-reels
+// Allows frontend to get mock reel data cleanly using the backend Node.js environment
+// This bypasses browser CORS errors safely.
+router.get('/public-reels', (req, res) => {
+    // Array of absolutely reliable external files typically used for dev previews/placeholders.
+    // Replace these URLs if you intend to stream proper external tiktok links using an actual API.
+    const MOCK_VIDEOS = [
+        { id: 'vid1', author: 'NatureLover', url: 'https://cdn.pixabay.com/video/2019/08/19/26131-354316686_tiny.mp4', title: 'Beautiful nature 🌊 #nature', views: 45200, comments: 124 },
+        { id: 'vid2', author: 'TravelDreams', url: 'https://cdn.pixabay.com/video/2021/08/11/84687-586749065_tiny.mp4', title: 'Relaxing views 🏔️ #travel', views: 89000, comments: 432 },
+        { id: 'vid3', author: 'CityLights', url: 'https://cdn.pixabay.com/video/2023/10/11/184518-873682970_tiny.mp4', title: 'Night drive through the city 🌃', views: 32000, comments: 88 },
+        { id: 'vid4', author: 'FoodieLife', url: 'https://cdn.pixabay.com/video/2020/05/11/38891-419711674_tiny.mp4', title: 'Life is good #vibes', views: 56000, comments: 210 },
+        { id: 'vid5', author: 'CutePets', url: 'https://cdn.pixabay.com/video/2020/07/04/43831-437599723_tiny.mp4', title: 'So cute 🐶❤️ #cute', views: 120500, comments: 890 }
+    ];
+
+    const formattedReels = MOCK_VIDEOS.map((vid) => ({
+        _id: vid.id,
+        userId: {
+            _id: vid.author,
+            username: `@${vid.author}`,
+            profilePic: `https://api.dicebear.com/7.x/avataaars/svg?seed=${vid.author}`
+        },
+        mediaUrl: vid.url,
+        caption: vid.title,
+        likes: [],
+        commentsCount: vid.comments,
+        views: vid.views
+    }));
+
+    res.json({ data: { children: formattedReels } });
+});
 
 module.exports = router;
