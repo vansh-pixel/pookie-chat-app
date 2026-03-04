@@ -173,33 +173,45 @@ router.post('/fetch-external', async (req, res) => {
 
 // GET /api/feed/public-reels
 // Allows frontend to get mock reel data cleanly using the backend Node.js environment
-// This bypasses browser CORS errors safely.
-router.get('/public-reels', (req, res) => {
-    // Array of absolutely reliable external files typically used for dev previews/placeholders.
-    // Replace these URLs if you intend to stream proper external tiktok links using an actual API.
-    const MOCK_VIDEOS = [
-        { id: 'vid1', author: 'NatureLover', url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4', title: 'Beautiful nature 🌊 #nature', views: 45200, comments: 124 },
-        { id: 'vid2', author: 'TravelDreams', url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4', title: 'Relaxing views 🏔️ #travel', views: 89000, comments: 432 },
-        { id: 'vid3', author: 'CityLights', url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4', title: 'Night drive through the city 🌃', views: 32000, comments: 88 },
-        { id: 'vid4', author: 'FoodieLife', url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4', title: 'Life is good #vibes', views: 56000, comments: 210 },
-        { id: 'vid5', author: 'CutePets', url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4', title: 'So cute 🐶❤️ #cute', views: 120500, comments: 890 }
-    ];
-
-    const formattedReels = MOCK_VIDEOS.map((vid) => ({
-        _id: vid.id,
-        userId: {
-            _id: vid.author,
-            username: `@${vid.author}`,
-            profilePic: `https://api.dicebear.com/7.x/avataaars/svg?seed=${vid.author}`
-        },
-        mediaUrl: vid.url,
-        caption: vid.title,
-        likes: [],
-        commentsCount: vid.comments,
-        views: vid.views
-    }));
-
-    res.json({ data: { children: formattedReels } });
+// This bypasses browser CORS errors safely and now hits live reddit.
+router.get('/public-reels', async (req, res) => {
+    try {
+        const afterToken = req.query.after || '';
+        const url = `https://www.reddit.com/r/TikTokCringe/hot.json?limit=15${afterToken ? `&after=${afterToken}` : ''}`;
+        
+        const response = await fetch(url, {
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+            }
+        });
+        
+        if (!response.ok) throw new Error('Failed to fetch from Reddit');
+        const data = await response.json();
+        
+        const posts = data.data.children;
+        const newAfter = data.data.after;
+        
+        const formattedReels = posts
+            .filter((p) => p.data.is_video && p.data.media?.reddit_video?.fallback_url)
+            .map((p) => ({
+                _id: p.data.id,
+                userId: {
+                    _id: p.data.author,
+                    username: `@${p.data.author}`,
+                    profilePic: `https://api.dicebear.com/7.x/avataaars/svg?seed=${p.data.author}`
+                },
+                mediaUrl: p.data.media.reddit_video.fallback_url,
+                caption: p.data.title,
+                likes: [],
+                commentsCount: p.data.num_comments,
+                views: p.data.ups 
+            }));
+            
+        res.json({ data: { children: formattedReels, after: newAfter } });
+    } catch (err) {
+        console.error("Error fetching live reels", err);
+        res.status(500).json({ error: "Failed to fetch live reels" });
+    }
 });
 
 module.exports = router;
