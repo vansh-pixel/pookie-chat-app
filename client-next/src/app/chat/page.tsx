@@ -836,7 +836,7 @@ export default function Chat() {
                 </div>
 
                 {/* Messages List */}
-                <div className="flex-1 overflow-y-auto p-4 md:p-10 space-y-1 relative z-0">
+                <div className="flex-1 overflow-y-auto p-4 md:p-10 space-y-1 relative z-0 [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-black/20 dark:[&::-webkit-scrollbar-thumb]:bg-white/20 hover:[&::-webkit-scrollbar-thumb]:bg-black/30 dark:hover:[&::-webkit-scrollbar-thumb]:bg-white/30 [&::-webkit-scrollbar-thumb]:rounded-full">
                     <div className="flex justify-center mb-6">
                         <span className="bg-white/90 backdrop-blur px-4 py-1 rounded-lg text-xs text-gray-500 shadow-sm uppercase font-bold tracking-wider">
                             Today
