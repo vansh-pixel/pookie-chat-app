@@ -123,6 +123,25 @@ io.on('connection', (socket) => {
        }
   });
 
+  // Handle profile/wallpaper updates
+  socket.on('profile_update', (data) => {
+    try {
+      const { userId, partnerId, profilePic, chatBgUrl, chatBgSize, chatBgPosition } = data;
+      // Notify the partner immediately that I changed my profile/wallpaper
+      if (partnerId) {
+        io.to(partnerId).emit('partner_profile_updated', {
+          partnerId: userId,
+          profilePic,
+          chatBgUrl,
+          chatBgSize,
+          chatBgPosition
+        });
+      }
+    } catch (err) {
+      console.error('Error broadcasting profile update:', err);
+    }
+  });
+
   socket.on('disconnect', () => {
     console.log('User disconnected:', socket.id);
   });

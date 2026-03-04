@@ -55,9 +55,39 @@ router.get('/user/:id', async (req, res) => {
         }
         const user = await User.findById(req.params.id);
         if (!user) return res.status(404).json({ error: 'User not found' });
-        res.json({ username: user.username, partnerId: user.partnerId });
+        res.json({ 
+            username: user.username, 
+            partnerId: user.partnerId,
+            profilePic: user.profilePic,
+            chatBgUrl: user.chatBgUrl,
+            chatBgSize: user.chatBgSize,
+            chatBgPosition: user.chatBgPosition
+        });
     } catch (err) {
         console.error("Error in GET /user/:id:", err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+router.put('/update-profile', async (req, res) => {
+    try {
+        const { userId, profilePic, chatBgUrl, chatBgSize, chatBgPosition } = req.body;
+        
+        const updateData = {};
+        if (profilePic !== undefined) updateData.profilePic = profilePic;
+        if (chatBgUrl !== undefined) updateData.chatBgUrl = chatBgUrl;
+        if (chatBgSize !== undefined) updateData.chatBgSize = chatBgSize;
+        if (chatBgPosition !== undefined) updateData.chatBgPosition = chatBgPosition;
+        
+        // If they explicitly send nulls, we want to allow removing them
+        if (req.body.chatBgUrl === null) updateData.chatBgUrl = null;
+        if (req.body.profilePic === null) updateData.profilePic = null;
+
+        const user = await User.findByIdAndUpdate(userId, updateData, { new: true });
+        if (!user) return res.status(404).json({ error: 'User not found' });
+        
+        res.json({ success: true, user });
+    } catch (err) {
         res.status(500).json({ error: err.message });
     }
 });

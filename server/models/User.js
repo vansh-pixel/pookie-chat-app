@@ -5,6 +5,10 @@ const userSchema = new mongoose.Schema({
   username: { type: String, required: true, unique: true },
   password: { type: String, required: true },
   partnerId: { type: String }, // Store the partner's user ID
+  profilePic: { type: String },
+  chatBgUrl: { type: String },
+  chatBgSize: { type: String, default: 'cover' },
+  chatBgPosition: { type: String, default: '50% 50%' },
 });
 
 userSchema.pre('save', async function () {
