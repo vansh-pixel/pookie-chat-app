@@ -51,15 +51,18 @@ export default function ReelsPage() {
         if (loading || (!hasMore && pageNum !== 1)) return;
         setLoading(true);
         try {
-            const res = await axios.get(`${API_URL}/api/feed/public-reels`);
-            const fetchedReels = res.data.data.children;
+            const res = await axios.get(`${API_URL}/api/feed/public-reels`, {
+                params: {
+                    after: afterToken || ''
+                }
+            });
 
-            // Simulate network delay for UX
-            await new Promise(r => setTimeout(r, 600));
+            const fetchedReels = res.data.data.children;
+            const newAfter = res.data.data.after;
 
             // Format into our Reel structure using the backend respose
             const formattedReels: Reel[] = fetchedReels.map((vid: any) => ({
-                _id: vid._id + '_' + pageNum, // Unique ID per page index for looping
+                _id: vid._id,
                 userId: vid.userId,
                 mediaUrl: vid.mediaUrl,
                 caption: vid.caption,
@@ -74,8 +77,11 @@ export default function ReelsPage() {
                 setActiveReelId(formattedReels[0]._id);
             }
 
-            // For demo purposes, let's just loop the 5 videos endlessly
-            // In a real app we'd fetch a new page from the API here
+            if (newAfter) {
+                setAfterToken(newAfter);
+            } else {
+                setHasMore(false);
+            }
         } catch (err) {
             console.error("Failed to fetch public reels", err);
         } finally {
