@@ -36,12 +36,10 @@ export default function RootLayout({
       >
         <ThemeProvider>
           <div className="flex flex-col min-h-screen">
-            <main className="flex-1 pb-[70px] md:pb-0"> {/* Add bottom padding for mobile when nav exists */}
+            <main className="flex-1 pb-[70px]"> {/* Always add bottom padding when nav exists */}
               {children}
             </main>
-            <div className="md:hidden">
-              <BottomNav />
-            </div>
+            <BottomNav />
           </div>
         </ThemeProvider>
       </body>

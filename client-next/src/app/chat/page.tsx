@@ -209,6 +209,13 @@ export default function Chat() {
                 const res = await axios.get(`${API_URL}/api/auth/user/${userId}`);
 
                 // Set our own profile fields (fallback to local if somehow API doesn't have it but we do)
+                const localBg = localStorage.getItem('chatBgUrl');
+                if (localBg) {
+                    setChatBgUrl(localBg);
+                    setChatBgSize(localStorage.getItem('chatBgSize') || 'cover');
+                    setChatBgPosition(localStorage.getItem('chatBgPosition') || '50% 50%');
+                }
+
                 if (res.data.profilePic) setProfilePic(res.data.profilePic);
                 if (res.data.chatBgUrl) {
                     setChatBgUrl(res.data.chatBgUrl);
@@ -427,9 +434,14 @@ export default function Chat() {
             });
 
             // 3. Update view and notify partner
-            setChatBgUrl(fileUrl);
+            setChatBgUrl(pendingBgUrl); // instant local update with blob!
             setChatBgSize(bgSize);
             setChatBgPosition(bgPosition);
+
+            // 4. Safely store in localStorage for instant reloading
+            localStorage.setItem('chatBgUrl', pendingBgUrl);
+            localStorage.setItem('chatBgSize', bgSize);
+            localStorage.setItem('chatBgPosition', bgPosition);
 
             socket.emit('profile_update', {
                 userId,
@@ -457,6 +469,9 @@ export default function Chat() {
             });
 
             setChatBgUrl(null);
+            localStorage.removeItem('chatBgUrl');
+            localStorage.removeItem('chatBgSize');
+            localStorage.removeItem('chatBgPosition');
 
             socket.emit('profile_update', {
                 userId,
