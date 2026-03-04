@@ -574,7 +574,7 @@ export default function Chat() {
     };
 
     return (
-        <div className={`flex h-[calc(100dvh-70px)] overflow-hidden font-cute relative transition-colors duration-500 ${s.bg}`}>
+        <div className={`flex w-full h-[100dvh] pb-[72px] overflow-hidden font-cute relative transition-colors duration-500 ${s.bg}`}>
             <AnimatePresence>
                 {notification && (
                     <Notification

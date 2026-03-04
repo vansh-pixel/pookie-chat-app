@@ -35,8 +35,8 @@ export default function RootLayout({
         className={`${fredoka.variable} ${pacifico.variable} antialiased font-cute bg-hk-pink/10`}
       >
         <ThemeProvider>
-          <div className="flex flex-col min-h-screen">
-            <main className="flex-1 pb-[70px]"> {/* Always add bottom padding when nav exists */}
+          <div className="flex flex-col flex-1 min-h-screen relative">
+            <main className="flex-1 w-full h-full relative">
               {children}
             </main>
             <BottomNav />

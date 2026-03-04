@@ -105,7 +105,7 @@ export default function FeedPage() {
     };
 
     return (
-        <div className={`min-h-[100dvh] w-full font-cute relative pb-20 md:pb-0 ${darkMode ? 'bg-zinc-950 text-white' : 'bg-gray-50 text-gray-900'}`}>
+        <div className={`min-h-[100dvh] w-full font-cute relative pb-24 ${darkMode ? 'bg-zinc-950 text-white' : 'bg-gray-50 text-gray-900'}`}>
             {/* Header */}
             <div className={`sticky top-0 z-50 p-4 flex items-center gap-4 border-b drop-shadow-sm ${darkMode ? 'bg-zinc-900/90 border-zinc-800 backdrop-blur-md' : 'bg-white/90 border-gray-200 backdrop-blur-md'}`}>
                 <h1 className="text-xl font-bold tracking-wide">Pookie Feed</h1>
