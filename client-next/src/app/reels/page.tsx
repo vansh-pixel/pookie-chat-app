@@ -4,6 +4,8 @@ import { useState, useEffect, useRef } from 'react';
 import { Heart, MessageCircle, Share2, ArrowLeft } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useTheme } from '../../context/ThemeContext';
+import axios from 'axios';
+import { API_URL } from '../../config/api';
 
 interface Reel {
     _id: string;
@@ -49,68 +51,20 @@ export default function ReelsPage() {
         if (loading || (!hasMore && pageNum !== 1)) return;
         setLoading(true);
         try {
-            // Since public APIs like Reddit/TikTok are often blocked by CORS or network filters 
-            // on certain deployments, we will use a reliable set of safe, beautiful vertical MP4s 
-            // hosted by Pexels for our Zero-Storage demonstration.
+            const res = await axios.get(`${API_URL}/api/feed/public-reels`);
+            const fetchedReels = res.data.data.children;
 
-            const MOCK_VIDEOS = [
-                {
-                    id: 'vid1',
-                    author: 'NatureLover',
-                    url: 'https://player.vimeo.com/external/494254201.sd.mp4?s=d120a2e5d1656ad64c9dcec0765d706a142dd260&profile_id=165&oauth2_token_id=57447761',
-                    title: 'Beautiful ocean waves 🌊 #nature',
-                    views: 45200,
-                    comments: 124
-                },
-                {
-                    id: 'vid2',
-                    author: 'TravelDreams',
-                    url: 'https://player.vimeo.com/external/403612503.sd.mp4?s=91079d375354be4fe305cae1d52d3a39151e06fe&profile_id=165&oauth2_token_id=57447761',
-                    title: 'Wandering through the mountains 🏔️ #travel',
-                    views: 89000,
-                    comments: 432
-                },
-                {
-                    id: 'vid3',
-                    author: 'CutePets',
-                    url: 'https://player.vimeo.com/external/432174352.sd.mp4?s=1246db1ba66c8fb73bde9c9d073041a3cd432851&profile_id=165&oauth2_token_id=57447761',
-                    title: 'Puppy playing in the grass 🐶❤️ #cute',
-                    views: 120500,
-                    comments: 890
-                },
-                {
-                    id: 'vid4',
-                    author: 'CityLights',
-                    url: 'https://player.vimeo.com/external/371900139.sd.mp4?s=1fb8041c3b1eaadea58c0ff38914ba0ca444fe64&profile_id=165&oauth2_token_id=57447761',
-                    title: 'Night drive through the city 🌃',
-                    views: 32000,
-                    comments: 88
-                },
-                {
-                    id: 'vid5',
-                    author: 'FoodieLife',
-                    url: 'https://player.vimeo.com/external/436665042.sd.mp4?s=1ee8c2da22c07920ab4de7b4e6d4001ebee7eeeb&profile_id=165&oauth2_token_id=57447761',
-                    title: 'Making the perfect pouring coffee ☕️ #barista',
-                    views: 56000,
-                    comments: 210
-                }
-            ];
+            // Simulate network delay for UX
+            await new Promise(r => setTimeout(r, 600));
 
-            // Simulate network delay
-            await new Promise(r => setTimeout(r, 800));
-
-            // Format into our Reel structure
-            const formattedReels: Reel[] = MOCK_VIDEOS.map((vid) => ({
-                _id: vid.id + '_' + pageNum, // ensure unique keys if we loop
-                userId: {
-                    _id: vid.author,
-                    username: `@${vid.author}`,
-                    profilePic: `https://api.dicebear.com/7.x/avataaars/svg?seed=${vid.author}`
-                },
-                mediaUrl: vid.url,
-                caption: vid.title,
+            // Format into our Reel structure using the backend respose
+            const formattedReels: Reel[] = fetchedReels.map((vid: any) => ({
+                _id: vid._id + '_' + pageNum, // Unique ID per page index for looping
+                userId: vid.userId,
+                mediaUrl: vid.mediaUrl,
+                caption: vid.caption,
                 likes: [],
-                commentsCount: vid.comments,
+                commentsCount: vid.commentsCount,
                 views: vid.views
             }));
 
