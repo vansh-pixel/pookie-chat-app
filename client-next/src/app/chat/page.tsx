@@ -46,6 +46,7 @@ export default function Chat() {
     const [showDrawingModal, setShowDrawingModal] = useState(false);
 
     // Personalization State
+    const [showMenu, setShowMenu] = useState(false);
     const [chatBgUrl, setChatBgUrl] = useState<string | null>(null);
     const [chatBgSize, setChatBgSize] = useState('cover');
     const [chatBgPosition, setChatBgPosition] = useState('50% 50%');
@@ -818,25 +819,32 @@ export default function Chat() {
                         <Phone size={22} className="cursor-pointer hover:scale-110 transition-transform" />
                         <Video size={22} className="cursor-pointer hover:scale-110 transition-transform" />
 
-                        <div className="relative group">
-                            <MoreVertical size={22} className={`cursor-pointer transition-colors ${(chatBgUrl || partnerChatBgUrl) ? 'text-white' : 'text-gray-400 hover:text-gray-600'}`} />
-                            <div className="absolute right-0 top-full mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-xl border dark:border-gray-700 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 overflow-hidden">
-                                <input type="file" ref={bgInputRef} className="hidden" accept="image/*" onChange={handleBgUpload} />
-                                <button onClick={() => bgInputRef.current?.click()} className="w-full text-left px-4 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200 font-cute">
-                                    🖼️ Change Wallpaper
-                                </button>
-                                {chatBgUrl && (
-                                    <button onClick={removeBg} className="w-full text-left px-4 py-3 text-sm hover:bg-red-50 dark:hover:bg-red-900/20 text-red-500 font-cute border-t dark:border-gray-700">
-                                        🗑️ Remove Wallpaper
-                                    </button>
-                                )}
-                            </div>
+                        <div className="relative">
+                            <MoreVertical onClick={() => setShowMenu(!showMenu)} size={22} className={`cursor-pointer transition-colors ${(chatBgUrl || partnerChatBgUrl) ? 'text-white' : 'text-gray-400 hover:text-gray-600'}`} />
+
+                            {/* Mobile-friendly click menu instead of hover */}
+                            {showMenu && (
+                                <>
+                                    <div className="fixed inset-0 z-40" onClick={() => setShowMenu(false)}></div>
+                                    <div className="absolute right-0 top-full mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-xl border dark:border-gray-700 z-50 overflow-hidden">
+                                        <input type="file" ref={bgInputRef} className="hidden" accept="image/*" onChange={(e) => { handleBgUpload(e); setShowMenu(false); }} />
+                                        <button onClick={() => { bgInputRef.current?.click(); }} className="w-full text-left px-4 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200 font-cute outline-none">
+                                            🖼️ Change Wallpaper
+                                        </button>
+                                        {chatBgUrl && (
+                                            <button onClick={() => { removeBg(); setShowMenu(false); }} className="w-full text-left px-4 py-3 text-sm hover:bg-red-50 dark:hover:bg-red-900/20 text-red-500 font-cute border-t dark:border-gray-700 outline-none">
+                                                🗑️ Remove Wallpaper
+                                            </button>
+                                        )}
+                                    </div>
+                                </>
+                            )}
                         </div>
                     </div>
                 </div>
 
-                {/* Messages List */}
-                <div className="flex-1 overflow-y-auto p-4 md:p-10 space-y-1 relative z-0 [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-black/20 dark:[&::-webkit-scrollbar-thumb]:bg-white/20 hover:[&::-webkit-scrollbar-thumb]:bg-black/30 dark:hover:[&::-webkit-scrollbar-thumb]:bg-white/30 [&::-webkit-scrollbar-thumb]:rounded-full">
+                {/* Messages List - Also removing the inline tailwind scrollbar override to let our global display:none rule work completely */}
+                <div className="flex-1 overflow-y-auto p-4 md:p-10 space-y-1 relative z-0 no-scrollbar">
                     <div className="flex justify-center mb-6">
                         <span className="bg-white/90 backdrop-blur px-4 py-1 rounded-lg text-xs text-gray-500 shadow-sm uppercase font-bold tracking-wider">
                             Today
