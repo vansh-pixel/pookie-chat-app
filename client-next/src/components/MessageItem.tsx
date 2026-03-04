@@ -7,7 +7,7 @@ import { TikTokEmbed, InstagramEmbed } from 'react-social-media-embed';
 
 interface Message {
     content: string;
-    type: 'text' | 'audio' | 'missYou' | 'file' | 'sticker';
+    type: 'text' | 'audio' | 'missYou' | 'file' | 'sticker' | 'reel';
     timestamp: string;
     sender: string;
     read?: boolean;
@@ -230,6 +230,21 @@ const MessageItem = ({ message, isOwn, darkMode }: MessageItemProps) => {
                 ) : socialMediaType === 'instagram' ? (
                     <div className="flex justify-center w-full min-w-[320px] mt-1 mb-2 bg-white rounded-lg overflow-hidden">
                         <InstagramEmbed url={message.content} width="100%" />
+                    </div>
+                ) : message.type === 'reel' ? (
+                    <div className="flex flex-col gap-2 mt-1 mb-2 max-w-[260px]">
+                        <div className="w-full aspect-[9/16] bg-black rounded-xl overflow-hidden relative shadow-inner">
+                            <video
+                                src={message.content}
+                                className="w-full h-full object-cover"
+                                autoPlay
+                                muted
+                                loop
+                                playsInline
+                                controls
+                            />
+                        </div>
+                        <p className={`text-xs font-bold px-1 ${isOwn ? 'text-pink-100' : 'text-gray-500'}`}>Shared a Reel</p>
                     </div>
                 ) : (
                     <p className="font-cute leading-relaxed whitespace-pre-wrap">{message.content}</p>

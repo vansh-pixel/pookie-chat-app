@@ -69,6 +69,8 @@ app.use('/api/feed', feedRoutes);
 // Map to track active connections: socket.id -> userId
 const onlineUsers = new Map();
 
+app.set('io', io); // Expose io to routes
+
 io.on('connection', (socket) => {
   console.log('User connected:', socket.id);
 

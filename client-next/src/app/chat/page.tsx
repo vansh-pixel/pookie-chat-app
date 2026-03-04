@@ -527,6 +527,11 @@ export default function Chat() {
         }
     };
 
+    const handleSendDrawing = (base64Data: string) => {
+        setShowDrawingModal(false);
+        sendMessage(base64Data, 'sticker');
+    };
+
     const formatLastSeen = (dateString: string | null) => {
         if (!dateString) return "Last seen recently";
 
@@ -734,21 +739,6 @@ export default function Chat() {
                         <div className="text-xs text-gray-500 bg-white p-2 rounded border border-gray-200 break-all">
                             Your ID: <span className="select-all font-mono text-gray-800 font-bold bg-yellow-100 px-1 rounded">{userId}</span>
                         </div>
-                    </div>
-                    {/* Navigation Links Area */}
-                    <div className="px-4 mt-2 flex gap-2">
-                        <button
-                            onClick={() => router.push('/feed')}
-                            className={`flex flex-1 items-center justify-center gap-2 p-2 rounded-xl text-xs font-bold transition-all shadow-sm ${darkMode ? 'bg-indigo-900/40 border border-indigo-800 text-indigo-200 hover:bg-indigo-800/60' : 'bg-indigo-50 border border-indigo-100 text-indigo-600 hover:bg-indigo-100'}`}
-                        >
-                            <ImageIcon size={16} /> Memory Feed
-                        </button>
-                        <button
-                            onClick={() => router.push('/reels')}
-                            className={`flex flex-1 items-center justify-center gap-2 p-2 rounded-xl text-xs font-bold transition-all shadow-sm ${darkMode ? 'bg-fuchsia-900/40 border border-fuchsia-800 text-fuchsia-200 hover:bg-fuchsia-800/60' : 'bg-fuchsia-50 border border-fuchsia-100 text-fuchsia-600 hover:bg-fuchsia-100'}`}
-                        >
-                            <Film size={16} /> Watch Reels
-                        </button>
                     </div>
                 </div>
             </div>

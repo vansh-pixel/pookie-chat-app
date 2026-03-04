@@ -31,6 +31,7 @@ export default function ReelsPage() {
     const [hasMore, setHasMore] = useState(true);
     const [afterToken, setAfterToken] = useState<string | null>(null);
     const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+    const [partnerId, setPartnerId] = useState<string | null>(null);
 
     // Track which reel is currently visible
     const [activeReelId, setActiveReelId] = useState<string | null>(null);
@@ -44,6 +45,14 @@ export default function ReelsPage() {
             return;
         }
         setCurrentUserId(uid);
+
+        // Fetch partner details early to enable sharing
+        axios.get(`${API_URL}/api/auth/user/${uid}`)
+            .then(res => {
+                if (res.data.partnerId) setPartnerId(res.data.partnerId);
+            })
+            .catch(err => console.error("Failed to fetch partner info", err));
+
         fetchReels(1, uid);
     }, []);
 
@@ -153,6 +162,7 @@ export default function ReelsPage() {
                                 reel={reel}
                                 isActive={activeReelId === reel._id}
                                 currentUserId={currentUserId}
+                                partnerId={partnerId}
                                 onInteract={handleInteract}
                                 onVisible={() => setActiveReelId(reel._id)}
                             />
@@ -178,12 +188,13 @@ export default function ReelsPage() {
 }
 
 // Child component to handle individual video lifecycle and visibility
-function ReelPlayer({ reel, isActive, currentUserId, onInteract, onVisible }: any) {
+function ReelPlayer({ reel, isActive, currentUserId, partnerId, onInteract, onVisible }: any) {
     const videoRef = useRef<HTMLVideoElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
     const [isLiked, setIsLiked] = useState(false);
     const [viewRegistered, setViewRegistered] = useState(false);
     const [isMuted, setIsMuted] = useState(true); // Default to true so browser allows autoplay
+    const [isSharing, setIsSharing] = useState(false);
 
     useEffect(() => {
         if (currentUserId && reel.likes) {
@@ -255,6 +266,29 @@ function ReelPlayer({ reel, isActive, currentUserId, onInteract, onVisible }: an
         setIsLiked(!isLiked);
     };
 
+    const handleShare = async () => {
+        if (!currentUserId || !partnerId) {
+            alert(partnerId ? "Error sharing!" : "Connect with a partner first to share reels!");
+            return;
+        }
+
+        setIsSharing(true);
+        try {
+            await axios.post(`${API_URL}/api/messages/send`, {
+                sender: currentUserId,
+                receiver: partnerId,
+                content: reel.mediaUrl,
+                type: 'reel'
+            });
+            alert("Sent to Partner! 💖");
+        } catch (err) {
+            console.error("Failed to share reel", err);
+            alert("Failed to send reel.");
+        } finally {
+            setIsSharing(false);
+        }
+    };
+
     return (
         <div ref={containerRef} className="relative w-full h-full max-w-[500px] mx-auto bg-black border-x border-zinc-800/50">
             {/* Video Element */}
@@ -316,11 +350,13 @@ function ReelPlayer({ reel, isActive, currentUserId, onInteract, onVisible }: an
                     <span className="text-white text-xs font-semibold drop-shadow-md">{reel.commentsCount || 0}</span>
                 </button>
 
-                <button className="flex flex-col items-center gap-1 group">
-                    <div className="p-3 bg-black/20 backdrop-blur-md rounded-full group-hover:bg-black/40 transition-all">
+                <button onClick={handleShare} disabled={isSharing} className="flex flex-col items-center gap-1 group z-50">
+                    <div className={`p-3 bg-black/20 backdrop-blur-md rounded-full transition-all ${isSharing ? 'opacity-50' : 'group-hover:bg-black/40'}`}>
                         <Share2 size={28} className="text-white" />
                     </div>
-                    <span className="text-white text-xs font-semibold drop-shadow-md">Share</span>
+                    <span className="text-white text-xs font-semibold drop-shadow-md">
+                        {isSharing ? 'Sending...' : 'Share'}
+                    </span>
                 </button>
 
                 <div className="w-10 h-10 mt-2 bg-zinc-800 border-2 border-white rounded-md overflow-hidden animate-spin-slow">
