@@ -177,8 +177,23 @@ router.post('/fetch-external', async (req, res) => {
 router.get('/public-reels', async (req, res) => {
     try {
         const afterToken = req.query.after || '';
-        const safeSubreddits = 'aww+MadeMeSmile+funny+TikTokCats+TikTokDogs+TikTokPets';
-        const url = `https://www.reddit.com/r/${safeSubreddits}/hot.json?limit=50${afterToken ? `&after=${afterToken}` : ''}`;
+        
+        // 1. Expand and Randomize the Subreddit sources
+        const allSafeSubreddits = [
+            'aww', 'MadeMeSmile', 'funny', 'TikTokCats', 'TikTokDogs', 
+            'TikTokPets', 'AnimalsBeingDerps', 'Eyebleach', 'BetterEveryLoop',
+            'Unexpected', 'Satisfyingasfuck', 'nextfuckinglevel', 'wholesome'
+        ];
+        
+        // Pick 4-6 random subreddits from the list to mix content
+        const shuffledSubs = [...allSafeSubreddits].sort(() => 0.5 - Math.random());
+        const selectedSubs = shuffledSubs.slice(0, 6).join('+');
+        
+        // 2. Randomize the Sort order (hot, new, top, rising)
+        const sorts = ['hot', 'new', 'rising'];
+        const randomSort = sorts[Math.floor(Math.random() * sorts.length)];
+        
+        const url = `https://www.reddit.com/r/${selectedSubs}/${randomSort}.json?limit=50${afterToken ? `&after=${afterToken}` : ''}`;
         
         const response = await fetch(url, {
             headers: {
@@ -192,7 +207,8 @@ router.get('/public-reels', async (req, res) => {
         const posts = data.data.children;
         const newAfter = data.data.after;
         
-        const formattedReels = posts
+        // 3. Format into Reels
+        let formattedReels = posts
             .filter((p) => p.data.is_video && p.data.media?.reddit_video?.fallback_url)
             .map((p) => ({
                 _id: p.data.id,
@@ -207,6 +223,12 @@ router.get('/public-reels', async (req, res) => {
                 commentsCount: p.data.num_comments,
                 views: p.data.ups 
             }));
+            
+        // 4. Fisher-Yates Shuffle the result so it's fresh even if the source is the same
+        for (let i = formattedReels.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [formattedReels[i], formattedReels[j]] = [formattedReels[j], formattedReels[i]];
+        }
             
         res.json({ data: { children: formattedReels, after: newAfter } });
     } catch (err) {
